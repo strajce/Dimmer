@@ -1,0 +1,9 @@
+-batch 
+-create dimmer 
+-ver 1.00.a 
+-dir "C:\materija\ra198-2013\Dimmer" 
+-lang vhdl 
+-bus axi4lite s 
+-reg 16 
+-xps 
+-ise 

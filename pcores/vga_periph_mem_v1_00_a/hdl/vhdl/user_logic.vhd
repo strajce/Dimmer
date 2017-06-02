@@ -128,6 +128,7 @@ entity user_logic is
     red_o          : out std_logic_vector(7 downto 0);
     green_o        : out std_logic_vector(7 downto 0);
     blue_o         : out std_logic_vector(7 downto 0);
+	irq_o : out std_logic;
     -- ADD USER PORTS ABOVE THIS LINE ------------------
 
     -- DO NOT EDIT BELOW THIS LINE ---------------------
@@ -204,6 +205,7 @@ architecture IMP of user_logic is
 
  
   --USER signal declarations added here, as needed for user logic
+	
     component vga_top is 
     generic (
       H_RES                : natural := 640;
@@ -321,6 +323,8 @@ architecture IMP of user_logic is
   signal unit_sel            : std_logic_vector(1 downto 0);
   signal unit_addr           : std_logic_vector(GRAPH_MEM_ADDR_WIDTH-1 downto 0);--15+6+1
   signal reg_we              : std_logic;
+  signal v_sync_counter_tc   : std_logic_vector(31 downto 0);
+  signal irq_s :std_logic;
 
 begin
   --USER logic implementation added here
@@ -336,8 +340,7 @@ begin
   char_we      <= '1' when ((Bus2IP_WrCE(0) = '1') and (unit_sel = "01")) else '0';
   
   reg_we       <= '1' when ((Bus2IP_WrCE(0) = '1') and (unit_sel = "00")) else '0';
-  
-  
+    
   process (Bus2IP_Clk, Bus2IP_Resetn) 
   begin
     if (Bus2IP_Resetn='0') then
@@ -359,6 +362,8 @@ begin
             when REG_ADDR_04 => foreground_color <= Bus2IP_Data(23 downto 0);
             when REG_ADDR_05 => background_color <= Bus2IP_Data(23 downto 0);
             when REG_ADDR_06 => frame_color      <= Bus2IP_Data(23 downto 0);
+			when REG_ADDR_07 => v_sync_counter_tc<= Bus2IP_Data(31 downto 0);
+			when REG_ADDR_08 => irq_s <= irq_o;
             when others => null;
           end case;
         end if;
@@ -372,6 +377,7 @@ begin
 --  foreground_color <= x"FFFFFF";
 --  background_color <= x"000000";
 --  frame_color      <= x"FF0000";
+--  interrupt <= 1110 0000;
   ------------------------------------------
   -- Example code to access user logic memory region
   -- 
@@ -544,5 +550,8 @@ begin
     S  => '0'                -- 1-bit set input
   );
   pix_clock_n <= not(pix_clock_s);
+  
+  irq_s <= '1' when dir_pixel_row = v_sync_counter_tc else
+			'0';
 
 end IMP;

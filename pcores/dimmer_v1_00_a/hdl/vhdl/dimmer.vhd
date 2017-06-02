@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
--- vga_periph_mem.vhd - entity/architecture pair
+-- dimmer.vhd - entity/architecture pair
 ------------------------------------------------------------------------------
 -- IMPORTANT:
 -- DO NOT MODIFY THIS FILE EXCEPT IN THE DESIGNATED SECTIONS.
@@ -32,10 +32,10 @@
 -- ***************************************************************************
 --
 ------------------------------------------------------------------------------
--- Filename:          vga_periph_mem.vhd
+-- Filename:          dimmer.vhd
 -- Version:           1.00.a
 -- Description:       Top level design, instantiates library components and user logic.
--- Date:              Wed Mar 05 10:25:21 2014 (by Create and Import Peripheral Wizard)
+-- Date:              Thu May 11 12:01:51 2017 (by Create and Import Peripheral Wizard)
 -- VHDL Standard:     VHDL'93
 ------------------------------------------------------------------------------
 -- Naming Conventions:
@@ -66,70 +66,52 @@ library proc_common_v3_00_a;
 use proc_common_v3_00_a.proc_common_pkg.all;
 use proc_common_v3_00_a.ipif_pkg.all;
 
-library axi_slave_burst_v1_00_a;
-use axi_slave_burst_v1_00_a.axi_slave_burst;
+library axi_lite_ipif_v1_01_a;
+use axi_lite_ipif_v1_01_a.axi_lite_ipif;
 
-library vga_periph_mem_v1_00_a;
-use vga_periph_mem_v1_00_a.user_logic;
+library dimmer_v1_00_a;
+use dimmer_v1_00_a.user_logic;
 
 ------------------------------------------------------------------------------
 -- Entity section
 ------------------------------------------------------------------------------
 -- Definition of Generics:
---   C_S_AXI_DATA_WIDTH           -- AXI4 slave: Data Width
---   C_S_AXI_ADDR_WIDTH           -- AXI4 slave: Address Width
---   C_S_AXI_ID_WIDTH             -- AXI4 slave: ID Width
---   C_RDATA_FIFO_DEPTH           -- AXI4 slave: FIFO Depth
---   C_INCLUDE_TIMEOUT_CNT        -- AXI4 slave: Data Timeout Count
---   C_TIMEOUT_CNTR_VAL           -- AXI4 slave: Timeout Counter Value
---   C_ALIGN_BE_RDADDR            -- AXI4 slave: Align Byte Enable read Data Address
---   C_S_AXI_SUPPORTS_WRITE       -- AXI4 slave: Support Write
---   C_S_AXI_SUPPORTS_READ        -- AXI4 slave: Support Read
+--   C_S_AXI_DATA_WIDTH           -- AXI4LITE slave: Data width
+--   C_S_AXI_ADDR_WIDTH           -- AXI4LITE slave: Address Width
+--   C_S_AXI_MIN_SIZE             -- AXI4LITE slave: Min Size
+--   C_USE_WSTRB                  -- AXI4LITE slave: Write Strobe
+--   C_DPHASE_TIMEOUT             -- AXI4LITE slave: Data Phase Timeout
+--   C_BASEADDR                   -- AXI4LITE slave: base address
+--   C_HIGHADDR                   -- AXI4LITE slave: high address
 --   C_FAMILY                     -- FPGA Family
---   C_S_AXI_MEM0_BASEADDR        -- User memory space 0 base address
---   C_S_AXI_MEM0_HIGHADDR        -- User memory space 0 high address
+--   C_NUM_REG                    -- Number of software accessible registers
+--   C_NUM_MEM                    -- Number of address-ranges
+--   C_SLV_AWIDTH                 -- Slave interface address bus width
+--   C_SLV_DWIDTH                 -- Slave interface data bus width
 --
 -- Definition of Ports:
---   S_AXI_ACLK                   -- AXI4 slave: Clock
---   S_AXI_ARESETN                -- AXI4 slave: Reset
---   S_AXI_AWADDR                 -- AXI4 slave: Write address
---   S_AXI_AWVALID                -- AXI4 slave: Write address valid
---   S_AXI_WDATA                  -- AXI4 slave: Write data
---   S_AXI_WSTRB                  -- AXI4 slave: Write strobe
---   S_AXI_WVALID                 -- AXI4 slave: Write data valid
---   S_AXI_BREADY                 -- AXI4 slave: read response ready
---   S_AXI_ARADDR                 -- AXI4 slave: read address
---   S_AXI_ARVALID                -- AXI4 slave: read address valid
---   S_AXI_RREADY                 -- AXI4 slave: read data ready
---   S_AXI_ARREADY                -- AXI4 slave: read address ready
---   S_AXI_RDATA                  -- AXI4 slave: read data
---   S_AXI_RRESP                  -- AXI4 slave: read data response
---   S_AXI_RVALID                 -- AXI4 slave: read data valid
---   S_AXI_WREADY                 -- AXI4 slave: write data ready
---   S_AXI_BRESP                  -- AXI4 slave: read response
---   S_AXI_BVALID                 -- AXI4 slave: read response valid
---   S_AXI_AWREADY                -- AXI4 slave: write address ready
---   S_AXI_AWID                   -- AXI4 slave: write address ID
---   S_AXI_AWLEN                  -- AXI4 slave: write address Length
---   S_AXI_AWSIZE                 -- AXI4 slave: write address size
---   S_AXI_AWBURST                -- AXI4 slave: write address burst
---   S_AXI_AWLOCK                 -- AXI4 slave: write address lock
---   S_AXI_AWCACHE                -- AXI4 slave: write address cache
---   S_AXI_AWPROT                 -- AXI4 slave: write address protection
---   S_AXI_WLAST                  -- AXI4 slave: write data last
---   S_AXI_BID                    -- AXI4 slave: read response ID
---   S_AXI_ARID                   -- AXI4 slave: read address ID
---   S_AXI_ARLEN                  -- AXI4 slave: read address Length
---   S_AXI_ARSIZE                 -- AXI4 slave: read address size
---   S_AXI_ARBURST                -- AXI4 slave: read address burst
---   S_AXI_ARLOCK                 -- AXI4 slave: read address lock
---   S_AXI_ARCACHE                -- AXI4 slave: read address cache
---   S_AXI_ARPROT                 -- AXI4 slave: read address protection
---   S_AXI_RID                    -- AXI4 slave: read data ID
---   S_AXI_RLAST                  -- AXI4 slave: read data last
+--   S_AXI_ACLK                   -- AXI4LITE slave: Clock 
+--   S_AXI_ARESETN                -- AXI4LITE slave: Reset
+--   S_AXI_AWADDR                 -- AXI4LITE slave: Write address
+--   S_AXI_AWVALID                -- AXI4LITE slave: Write address valid
+--   S_AXI_WDATA                  -- AXI4LITE slave: Write data
+--   S_AXI_WSTRB                  -- AXI4LITE slave: Write strobe
+--   S_AXI_WVALID                 -- AXI4LITE slave: Write data valid
+--   S_AXI_BREADY                 -- AXI4LITE slave: Response ready
+--   S_AXI_ARADDR                 -- AXI4LITE slave: Read address
+--   S_AXI_ARVALID                -- AXI4LITE slave: Read address valid
+--   S_AXI_RREADY                 -- AXI4LITE slave: Read data ready
+--   S_AXI_ARREADY                -- AXI4LITE slave: read addres ready
+--   S_AXI_RDATA                  -- AXI4LITE slave: Read data
+--   S_AXI_RRESP                  -- AXI4LITE slave: Read data response
+--   S_AXI_RVALID                 -- AXI4LITE slave: Read data valid
+--   S_AXI_WREADY                 -- AXI4LITE slave: Write data ready
+--   S_AXI_BRESP                  -- AXI4LITE slave: Response
+--   S_AXI_BVALID                 -- AXI4LITE slave: Resonse valid
+--   S_AXI_AWREADY                -- AXI4LITE slave: Wrte address ready
 ------------------------------------------------------------------------------
 
-entity vga_periph_mem is
+entity dimmer is
   generic
   (
     -- ADD USER GENERICS BELOW THIS LINE ---------------
@@ -140,38 +122,24 @@ entity vga_periph_mem is
     -- Bus protocol parameters, do not add to or delete
     C_S_AXI_DATA_WIDTH             : integer              := 32;
     C_S_AXI_ADDR_WIDTH             : integer              := 32;
-    C_S_AXI_ID_WIDTH               : integer              := 4;
-    C_RDATA_FIFO_DEPTH             : integer              := 0;
-    C_INCLUDE_TIMEOUT_CNT          : integer              := 1;
-    C_TIMEOUT_CNTR_VAL             : integer              := 8;
-    C_ALIGN_BE_RDADDR              : integer              := 0;
-    C_S_AXI_SUPPORTS_WRITE         : integer              := 1;
-    C_S_AXI_SUPPORTS_READ          : integer              := 1;
+    C_S_AXI_MIN_SIZE               : std_logic_vector     := X"000001FF";
+    C_USE_WSTRB                    : integer              := 0;
+    C_DPHASE_TIMEOUT               : integer              := 8;
+    C_BASEADDR                     : std_logic_vector     := X"FFFFFFFF";
+    C_HIGHADDR                     : std_logic_vector     := X"00000000";
     C_FAMILY                       : string               := "virtex6";
-    C_S_AXI_MEM0_BASEADDR          : std_logic_vector     := X"FFFFFFFF";
-    C_S_AXI_MEM0_HIGHADDR          : std_logic_vector     := X"00000000"
+    C_NUM_REG                      : integer              := 1;
+    C_NUM_MEM                      : integer              := 1;
+    C_SLV_AWIDTH                   : integer              := 32;
+    C_SLV_DWIDTH                   : integer              := 32
     -- DO NOT EDIT ABOVE THIS LINE ---------------------
   );
   port
   (
     -- ADD USER PORTS BELOW THIS LINE ------------------
     --USER ports added here
-    clk_i          : in  std_logic;
-    reset_n_i      : in  std_logic;
-    --
-    direct_mode_i  : in  std_logic;
-    display_mode_i : in  std_logic_vector(1 downto 0);
-    -- vga
-    vga_hsync_o    : out std_logic;
-    vga_vsync_o    : out std_logic;
-    blank_o        : out std_logic;
-    pix_clock_o    : out std_logic;
-    psave_o        : out std_logic;
-    sync_o         : out std_logic;
-    red_o          : out std_logic_vector(7 downto 0);
-    green_o        : out std_logic_vector(7 downto 0);
-    blue_o         : out std_logic_vector(7 downto 0);
-	irq_o          : out std_logic;
+	 i_zero_cross                   : in std_logic;
+	 o_pwm                          : out std_logic;
     -- ADD USER PORTS ABOVE THIS LINE ------------------
 
     -- DO NOT EDIT BELOW THIS LINE ---------------------
@@ -194,25 +162,7 @@ entity vga_periph_mem is
     S_AXI_WREADY                   : out std_logic;
     S_AXI_BRESP                    : out std_logic_vector(1 downto 0);
     S_AXI_BVALID                   : out std_logic;
-    S_AXI_AWREADY                  : out std_logic;
-    S_AXI_AWID                     : in  std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0);
-    S_AXI_AWLEN                    : in  std_logic_vector(7 downto 0);
-    S_AXI_AWSIZE                   : in  std_logic_vector(2 downto 0);
-    S_AXI_AWBURST                  : in  std_logic_vector(1 downto 0);
-    S_AXI_AWLOCK                   : in  std_logic;
-    S_AXI_AWCACHE                  : in  std_logic_vector(3 downto 0);
-    S_AXI_AWPROT                   : in  std_logic_vector(2 downto 0);
-    S_AXI_WLAST                    : in  std_logic;
-    S_AXI_BID                      : out std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0);
-    S_AXI_ARID                     : in  std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0);
-    S_AXI_ARLEN                    : in  std_logic_vector(7 downto 0);
-    S_AXI_ARSIZE                   : in  std_logic_vector(2 downto 0);
-    S_AXI_ARBURST                  : in  std_logic_vector(1 downto 0);
-    S_AXI_ARLOCK                   : in  std_logic;
-    S_AXI_ARCACHE                  : in  std_logic_vector(3 downto 0);
-    S_AXI_ARPROT                   : in  std_logic_vector(2 downto 0);
-    S_AXI_RID                      : out std_logic_vector(C_S_AXI_ID_WIDTH-1 downto 0);
-    S_AXI_RLAST                    : out std_logic
+    S_AXI_AWREADY                  : out std_logic
     -- DO NOT EDIT ABOVE THIS LINE ---------------------
   );
 
@@ -222,44 +172,44 @@ entity vga_periph_mem is
   attribute MAX_FANOUT of S_AXI_ARESETN       : signal is "10000";
   attribute SIGIS of S_AXI_ACLK       : signal is "Clk";
   attribute SIGIS of S_AXI_ARESETN       : signal is "Rst";
-end entity vga_periph_mem;
+end entity dimmer;
 
 ------------------------------------------------------------------------------
 -- Architecture section
 ------------------------------------------------------------------------------
 
-architecture IMP of vga_periph_mem is
+architecture IMP of dimmer is
 
   constant USER_SLV_DWIDTH                : integer              := C_S_AXI_DATA_WIDTH;
 
   constant IPIF_SLV_DWIDTH                : integer              := C_S_AXI_DATA_WIDTH;
 
   constant ZERO_ADDR_PAD                  : std_logic_vector(0 to 31) := (others => '0');
+  constant USER_SLV_BASEADDR              : std_logic_vector     := C_BASEADDR;
+  constant USER_SLV_HIGHADDR              : std_logic_vector     := C_HIGHADDR;
 
   constant IPIF_ARD_ADDR_RANGE_ARRAY      : SLV64_ARRAY_TYPE     := 
     (
-      ZERO_ADDR_PAD & C_S_AXI_MEM0_BASEADDR,-- user logic memory space 0 base address
-      ZERO_ADDR_PAD & C_S_AXI_MEM0_HIGHADDR -- user logic memory space 0 high address
+      ZERO_ADDR_PAD & USER_SLV_BASEADDR,  -- user logic slave space base address
+      ZERO_ADDR_PAD & USER_SLV_HIGHADDR   -- user logic slave space high address
     );
 
-  constant USER_NUM_MEM                   : integer              := 1;
+  constant USER_SLV_NUM_REG               : integer              := 16;
+  constant USER_NUM_REG                   : integer              := USER_SLV_NUM_REG;
+  constant TOTAL_IPIF_CE                  : integer              := USER_NUM_REG;
 
   constant IPIF_ARD_NUM_CE_ARRAY          : INTEGER_ARRAY_TYPE   := 
     (
-      0  => 1                             -- number of ce for user logic memory space 0 (always 1 chip enable)
+      0  => (USER_SLV_NUM_REG)            -- number of ce for user logic slave space
     );
-
-  ------------------------------------------
-  -- Width of the slave address bus (32 only)
-  ------------------------------------------
-  constant USER_SLV_AWIDTH                : integer              := C_S_AXI_ADDR_WIDTH;
 
   ------------------------------------------
   -- Index for CS/CE
   ------------------------------------------
-  constant USER_MEM0_CS_INDEX             : integer              := 0;
+  constant USER_SLV_CS_INDEX              : integer              := 0;
+  constant USER_SLV_CE_INDEX              : integer              := calc_start_ce_index(IPIF_ARD_NUM_CE_ARRAY, USER_SLV_CS_INDEX);
 
-  constant USER_CS_INDEX                  : integer              := USER_MEM0_CS_INDEX;
+  constant USER_CE_INDEX                  : integer              := USER_SLV_CE_INDEX;
 
   ------------------------------------------
   -- IP Interconnect (IPIC) signal declarations
@@ -273,18 +223,12 @@ architecture IMP of vga_periph_mem is
   signal ipif_Bus2IP_RdCE               : std_logic_vector(calc_num_ce(IPIF_ARD_NUM_CE_ARRAY)-1 downto 0);
   signal ipif_Bus2IP_WrCE               : std_logic_vector(calc_num_ce(IPIF_ARD_NUM_CE_ARRAY)-1 downto 0);
   signal ipif_Bus2IP_Data               : std_logic_vector(IPIF_SLV_DWIDTH-1 downto 0);
-  signal ipif_Bus2IP_Burst              : std_logic;
-  signal ipif_Bus2IP_BurstLength        : std_logic_vector(7 downto 0);
-  signal ipif_Bus2IP_WrReq              : std_logic;
-  signal ipif_Bus2IP_RdReq              : std_logic;
-  signal ipif_IP2Bus_AddrAck            : std_logic;
-  signal ipif_IP2Bus_RdAck              : std_logic;
   signal ipif_IP2Bus_WrAck              : std_logic;
+  signal ipif_IP2Bus_RdAck              : std_logic;
   signal ipif_IP2Bus_Error              : std_logic;
   signal ipif_IP2Bus_Data               : std_logic_vector(IPIF_SLV_DWIDTH-1 downto 0);
-  signal ipif_Type_of_xfer              : std_logic;
-  signal user_Bus2IP_BurstLength        : std_logic_vector(7 downto 0)   := (others => '0');
-  signal user_IP2Bus_AddrAck            : std_logic;
+  signal user_Bus2IP_RdCE               : std_logic_vector(USER_NUM_REG-1 downto 0);
+  signal user_Bus2IP_WrCE               : std_logic_vector(USER_NUM_REG-1 downto 0);
   signal user_IP2Bus_Data               : std_logic_vector(USER_SLV_DWIDTH-1 downto 0);
   signal user_IP2Bus_RdAck              : std_logic;
   signal user_IP2Bus_WrAck              : std_logic;
@@ -293,20 +237,16 @@ architecture IMP of vga_periph_mem is
 begin
 
   ------------------------------------------
-  -- instantiate axi_slave_burst
+  -- instantiate axi_lite_ipif
   ------------------------------------------
-  AXI_SLAVE_BURST_I : entity axi_slave_burst_v1_00_a.axi_slave_burst
+  AXI_LITE_IPIF_I : entity axi_lite_ipif_v1_01_a.axi_lite_ipif
     generic map
     (
       C_S_AXI_DATA_WIDTH             => IPIF_SLV_DWIDTH,
       C_S_AXI_ADDR_WIDTH             => C_S_AXI_ADDR_WIDTH,
-      C_S_AXI_ID_WIDTH               => C_S_AXI_ID_WIDTH,
-      C_RDATA_FIFO_DEPTH             => C_RDATA_FIFO_DEPTH,
-      C_INCLUDE_TIMEOUT_CNT          => C_INCLUDE_TIMEOUT_CNT,
-      C_TIMEOUT_CNTR_VAL             => C_TIMEOUT_CNTR_VAL,
-      C_ALIGN_BE_RDADDR              => C_ALIGN_BE_RDADDR,
-      C_S_AXI_SUPPORTS_WRITE         => C_S_AXI_SUPPORTS_WRITE,
-      C_S_AXI_SUPPORTS_READ          => C_S_AXI_SUPPORTS_READ,
+      C_S_AXI_MIN_SIZE               => C_S_AXI_MIN_SIZE,
+      C_USE_WSTRB                    => C_USE_WSTRB,
+      C_DPHASE_TIMEOUT               => C_DPHASE_TIMEOUT,
       C_ARD_ADDR_RANGE_ARRAY         => IPIF_ARD_ADDR_RANGE_ARRAY,
       C_ARD_NUM_CE_ARRAY             => IPIF_ARD_NUM_CE_ARRAY,
       C_FAMILY                       => C_FAMILY
@@ -332,24 +272,6 @@ begin
       S_AXI_BRESP                    => S_AXI_BRESP,
       S_AXI_BVALID                   => S_AXI_BVALID,
       S_AXI_AWREADY                  => S_AXI_AWREADY,
-      S_AXI_AWID                     => S_AXI_AWID,
-      S_AXI_AWLEN                    => S_AXI_AWLEN,
-      S_AXI_AWSIZE                   => S_AXI_AWSIZE,
-      S_AXI_AWBURST                  => S_AXI_AWBURST,
-      S_AXI_AWLOCK                   => S_AXI_AWLOCK,
-      S_AXI_AWCACHE                  => S_AXI_AWCACHE,
-      S_AXI_AWPROT                   => S_AXI_AWPROT,
-      S_AXI_WLAST                    => S_AXI_WLAST,
-      S_AXI_BID                      => S_AXI_BID,
-      S_AXI_ARID                     => S_AXI_ARID,
-      S_AXI_ARLEN                    => S_AXI_ARLEN,
-      S_AXI_ARSIZE                   => S_AXI_ARSIZE,
-      S_AXI_ARBURST                  => S_AXI_ARBURST,
-      S_AXI_ARLOCK                   => S_AXI_ARLOCK,
-      S_AXI_ARCACHE                  => S_AXI_ARCACHE,
-      S_AXI_ARPROT                   => S_AXI_ARPROT,
-      S_AXI_RID                      => S_AXI_RID,
-      S_AXI_RLAST                    => S_AXI_RLAST,
       Bus2IP_Clk                     => ipif_Bus2IP_Clk,
       Bus2IP_Resetn                  => ipif_Bus2IP_Resetn,
       Bus2IP_Addr                    => ipif_Bus2IP_Addr,
@@ -359,69 +281,42 @@ begin
       Bus2IP_RdCE                    => ipif_Bus2IP_RdCE,
       Bus2IP_WrCE                    => ipif_Bus2IP_WrCE,
       Bus2IP_Data                    => ipif_Bus2IP_Data,
-      Bus2IP_Burst                   => ipif_Bus2IP_Burst,
-      Bus2IP_BurstLength             => ipif_Bus2IP_BurstLength,
-      Bus2IP_WrReq                   => ipif_Bus2IP_WrReq,
-      Bus2IP_RdReq                   => ipif_Bus2IP_RdReq,
-      IP2Bus_AddrAck                 => ipif_IP2Bus_AddrAck,
-      IP2Bus_RdAck                   => ipif_IP2Bus_RdAck,
       IP2Bus_WrAck                   => ipif_IP2Bus_WrAck,
+      IP2Bus_RdAck                   => ipif_IP2Bus_RdAck,
       IP2Bus_Error                   => ipif_IP2Bus_Error,
-      IP2Bus_Data                    => ipif_IP2Bus_Data,
-      Type_of_xfer                   => ipif_Type_of_xfer
+      IP2Bus_Data                    => ipif_IP2Bus_Data
     );
 
   ------------------------------------------
   -- instantiate User Logic
   ------------------------------------------
-  USER_LOGIC_I : entity vga_periph_mem_v1_00_a.user_logic
+  USER_LOGIC_I : entity dimmer_v1_00_a.user_logic
     generic map
     (
       -- MAP USER GENERICS BELOW THIS LINE ---------------
       --USER generics mapped here
       -- MAP USER GENERICS ABOVE THIS LINE ---------------
 
-      C_SLV_AWIDTH                   => USER_SLV_AWIDTH,
-      C_SLV_DWIDTH                   => USER_SLV_DWIDTH,
-      C_NUM_MEM                      => USER_NUM_MEM
+      C_NUM_REG                      => USER_NUM_REG,
+      C_SLV_DWIDTH                   => USER_SLV_DWIDTH
     )
     port map
     (
       -- MAP USER PORTS BELOW THIS LINE ------------------
       --USER ports mapped here
-      clk_i          => clk_i,
-      reset_n_i      => reset_n_i,
-      --             =>
-      direct_mode_i  => direct_mode_i,
-      display_mode_i => display_mode_i,
-      -- vga
-      vga_hsync_o    => vga_hsync_o,
-      vga_vsync_o    => vga_vsync_o,
-      blank_o        => blank_o,
-      pix_clock_o    => pix_clock_o,
-      psave_o        => psave_o,
-      sync_o         => sync_o,
-      red_o          => red_o,
-      green_o        => green_o,
-      blue_o         => blue_o,
-	   irq_o          => irq_o,
+		i_zero_cross                   => i_zero_cross,
+		o_pwm                          => o_pwm,
       -- MAP USER PORTS ABOVE THIS LINE ------------------
 
       Bus2IP_Clk                     => ipif_Bus2IP_Clk,
       Bus2IP_Resetn                  => ipif_Bus2IP_Resetn,
       Bus2IP_Addr                    => ipif_Bus2IP_Addr,
-      Bus2IP_CS                      => ipif_Bus2IP_CS(USER_NUM_MEM-1 downto 0),
+      Bus2IP_CS                      => ipif_Bus2IP_CS,
       Bus2IP_RNW                     => ipif_Bus2IP_RNW,
       Bus2IP_Data                    => ipif_Bus2IP_Data,
       Bus2IP_BE                      => ipif_Bus2IP_BE,
-      Bus2IP_RdCE                    => ipif_Bus2IP_RdCE,
-      Bus2IP_WrCE                    => ipif_Bus2IP_WrCE,
-      Bus2IP_Burst                   => ipif_Bus2IP_Burst,
-      Bus2IP_BurstLength             => user_Bus2IP_BurstLength,
-      Bus2IP_RdReq                   => ipif_Bus2IP_RdReq,
-      Bus2IP_WrReq                   => ipif_Bus2IP_WrReq,
-      Type_of_xfer                   => ipif_Type_of_xfer,
-      IP2Bus_AddrAck                 => user_IP2Bus_AddrAck,
+      Bus2IP_RdCE                    => user_Bus2IP_RdCE,
+      Bus2IP_WrCE                    => user_Bus2IP_WrCE,
       IP2Bus_Data                    => user_IP2Bus_Data,
       IP2Bus_RdAck                   => user_IP2Bus_RdAck,
       IP2Bus_WrAck                   => user_IP2Bus_WrAck,
@@ -432,11 +327,11 @@ begin
   -- connect internal signals
   ------------------------------------------
   ipif_IP2Bus_Data <= user_IP2Bus_Data;
-  ipif_IP2Bus_AddrAck <= user_IP2Bus_AddrAck;
   ipif_IP2Bus_WrAck <= user_IP2Bus_WrAck;
   ipif_IP2Bus_RdAck <= user_IP2Bus_RdAck;
   ipif_IP2Bus_Error <= user_IP2Bus_Error;
 
-  user_Bus2IP_BurstLength(7 downto 0)<= ipif_Bus2IP_BurstLength(7 downto 0);
+  user_Bus2IP_RdCE <= ipif_Bus2IP_RdCE(USER_NUM_REG-1 downto 0);
+  user_Bus2IP_WrCE <= ipif_Bus2IP_WrCE(USER_NUM_REG-1 downto 0);
 
 end IMP;
